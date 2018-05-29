@@ -1,3 +1,8 @@
+# celery logs
+flask/celerybeat-schedule.bak
+flask/celerybeat-schedule.dat
+flask/celerybeat-schedule.dir
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

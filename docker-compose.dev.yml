@@ -1,0 +1,65 @@
+version: '3'
+
+services:
+
+
+  flask:
+    image: innersight/flask-base:2.7.11
+    working_dir: /var/www/flask
+    command: env 'FLASK_APP=manage.py' flask run -h 0.0.0.0
+    volumes:
+      - ./flask:/var/www/flask:rw
+    links:
+      - redis
+    environment:
+      - FLASK_SETTINGS=settings/dev.py
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/webapp_dev
+    ports:
+      - "5000:5000"
+
+
+  db:
+    image: postgres:10.4
+    ports:
+      - "5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./persist/pgdata:/var/lib/postgresql/data/pgdata
+      - ./postgresql/postgresql.prod.conf:/etc/postgresql.conf:rw
+      - ./postgresql/create_database.sh:/create_database.sh:rw
+
+
+
+  celery:
+    image: innersight/flask-base:2.7.11
+    working_dir: /var/www/flask
+    command: celery -A celery_worker:celery worker --loglevel=DEBUG
+    volumes:
+      - ./flask:/var/www/flask:rw
+    links:
+      - redis
+    environment:
+      - FLASK_SETTINGS=settings/dev.py
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/webapp_dev      
+
+
+  beats:
+    image: innersight/flask-base:2.7.11
+    working_dir: /var/www/flask
+    command: celery -A celery_worker:celery beat --loglevel=INFO
+    volumes:
+      - ./flask:/var/www/flask:rw
+    links:
+      - redis
+    environment:
+      - FLASK_SETTINGS=settings/dev.py
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/webapp_dev      
+
+
+  redis:  
+    image: redis:4.0
+    ports:
+      - "6379"
